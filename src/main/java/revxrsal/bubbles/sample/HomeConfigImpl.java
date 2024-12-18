@@ -20,9 +20,6 @@ public final class HomeConfigImpl implements HomeConfig {
 
     @Override
     public String capacitor() {
-        if (config.exists("home")) {
-            return config.parse("home", int.class);
-        }
         return HomeConfig.super.capacitor();
     }
 }
