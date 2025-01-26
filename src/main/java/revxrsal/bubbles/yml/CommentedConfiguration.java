@@ -35,14 +35,16 @@ import revxrsal.bubbles.blueprint.BlueprintClass;
 import revxrsal.bubbles.blueprint.Blueprints;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.StringReader;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.regex.Pattern;
+
+import static java.nio.file.StandardOpenOption.*;
 
 /**
  * A configuration that supports comments. Set comments with
@@ -62,7 +64,8 @@ public final class CommentedConfiguration {
     /**
      * Type reference for deserializing maps with string keys and object values.
      */
-    private static final Type MAP_TYPE = new TypeToken<Map<String, Object>>() {}.getType();
+    private static final Type MAP_TYPE = new TypeToken<Map<String, Object>>() {
+    }.getType();
 
     /**
      * Pattern for matching newline characters.
@@ -141,6 +144,12 @@ public final class CommentedConfiguration {
     @SneakyThrows
     public void save() {
         Map<String, Object> dataToMap = gson.fromJson(data, MAP_TYPE);
+        if (configComments.isEmpty()) {
+            try (BufferedWriter writer = Files.newBufferedWriter(file, CREATE, TRUNCATE_EXISTING, WRITE)) {
+                yaml.dump(dataToMap, writer);
+            }
+            return;
+        }
         String simpleDump = yaml.dump(dataToMap);
         String[] aLines = NEW_LINE.split(simpleDump);
         List<String> lines = new ArrayList<>();
@@ -154,7 +163,7 @@ public final class CommentedConfiguration {
                 lines.set(0, first.substring(1));
             }
         }
-        Files.write(file, lines, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
+        Files.write(file, lines, CREATE, TRUNCATE_EXISTING, WRITE);
     }
 
     /**

@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-public final class EnumTypeAdapterFactory implements TypeAdapterFactory {
+final class EnumTypeAdapterFactory implements TypeAdapterFactory {
 
     private static final EnumTypeAdapterFactory INSTANCE = new EnumTypeAdapterFactory();
 
