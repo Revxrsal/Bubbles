@@ -23,10 +23,7 @@
  */
 package revxrsal.bubbles.yml;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +64,7 @@ public final class CommentedConfiguration {
     private final Map<String, String> configComments = new HashMap<>();
     private final Gson gson;
     private final Path file;
-    private JsonObject data;
+    private JsonElement data = JsonNull.INSTANCE;
 
     CommentedConfiguration(Path file, Gson gson) {
         this.gson = gson;
@@ -143,7 +140,7 @@ public final class CommentedConfiguration {
      * @param gson The GSON instance to deserialize with
      * @return A new instance of CommentedConfiguration
      */
-    public static CommentedConfiguration from(Path file, Gson gson) {
+    public static @NotNull CommentedConfiguration from(@NotNull Path file, @NotNull Gson gson) {
         //Creating a blank instance of the config.
         return new CommentedConfiguration(file, gson);
     }
@@ -154,57 +151,110 @@ public final class CommentedConfiguration {
      * @param file The file to load the config from.
      * @return A new instance of CommentedConfiguration
      */
-    public static CommentedConfiguration from(Path file) {
+    public static @NotNull CommentedConfiguration from(@NotNull Path file) {
         //Creating a blank instance of the config.
         return from(file, GSON);
     }
 
-    private static @Nullable Method SET_PROCESS_COMMENTS;
-
-    static {
-        try {
-            SET_PROCESS_COMMENTS = DumperOptions.class.getDeclaredMethod("setProcessComments", boolean.class);
-            SET_PROCESS_COMMENTS.setAccessible(true);
-        } catch (NoSuchMethodException ignored) {
-        }
+    /**
+     * Retrieves the value for a key and deserializes it to the specified type.
+     *
+     * @param key  The key to retrieve the value for.
+     * @param type The type to deserialize the value into.
+     * @param <T>  The type of the returned value.
+     * @return The deserialized value.
+     */
+    public <T> T get(@NotNull String key, @NotNull Type type) {
+        return gson.fromJson(data.getAsJsonObject().get(key), type);
     }
 
-    @SneakyThrows
-    private static void setProcessComments(@NotNull DumperOptions options, boolean process) {
-        if (SET_PROCESS_COMMENTS != null)
-            // Invoke the method with the desired parameter
-            SET_PROCESS_COMMENTS.invoke(options, process);
-    }
-
-    public <T> T get(String key, Type type) {
-        return gson.fromJson(data.get(key), type);
-    }
-
-    public <T> T getAs(Type type) {
+    /**
+     * Deserializes the entire configuration data to the specified type.
+     *
+     * @param type The type to deserialize the data into.
+     * @param <T>  The type of the returned value.
+     * @return The deserialized data.
+     */
+    public <T> T getAs(@NotNull Type type) {
         return gson.fromJson(data, type);
     }
 
-    public <T> T get(String key, Class<T> type) {
+    /**
+     * Retrieves the value for a key and deserializes it to the specified class.
+     *
+     * @param key  The key to retrieve the value for.
+     * @param type The class to deserialize the value into.
+     * @param <T>  The type of the returned value.
+     * @return The deserialized value.
+     */
+    public <T> T get(@NotNull String key, @NotNull Class<T> type) {
         return get(key, (Type) type);
     }
 
-    public void set(String key, Object v) {
-        data.add(key, gson.toJsonTree(v));
+    /**
+     * Sets a value for a key using JSON serialization.
+     *
+     * @param key The key to set the value for.
+     * @param v   The value to set.
+     */
+    public void set(@NotNull String key, @NotNull Object v) {
+        data.getAsJsonObject().add(key, gson.toJsonTree(v));
     }
 
-    public void set(String key, Object v, Type type) {
-        data.add(key, gson.toJsonTree(v, type));
+    /**
+     * Sets a value for a key using JSON serialization with a specific type.
+     *
+     * @param key  The key to set the value for.
+     * @param v    The value to set.
+     * @param type The type used for serialization.
+     */
+    public void set(@NotNull String key, @NotNull Object v, @NotNull Type type) {
+        data.getAsJsonObject().add(key, gson.toJsonTree(v, type));
     }
 
-    public boolean contains(String path) {
-        return data.has(path);
+    /**
+     * Checks if the configuration contains a value for the given path.
+     *
+     * @param path The path to check.
+     * @return {@code true} if the path exists, {@code false} otherwise.
+     */
+    public boolean contains(@NotNull String path) {
+        return data.getAsJsonObject().has(path);
     }
 
-    public void setData(JsonObject jsonObject) {
-        this.data = jsonObject;
+    /**
+     * Replaces the configuration data with the given JSON object.
+     *
+     * @param data The new JSON object to set.
+     */
+    public void setData(@NotNull JsonObject data) {
+        this.data = data;
     }
 
-    public JsonObject getData() {
+    /**
+     * Replaces the configuration data with the given JSON object.
+     *
+     * @param data The new JSON object to set.
+     */
+    public void setData(@NotNull Object data, Type type) {
+        this.data = gson.toJsonTree(data, type);
+    }
+
+    /**
+     * Replaces the configuration data with the given JSON object.
+     *
+     * @param data The new JSON object to set.
+     */
+    public void setData(@NotNull Object data) {
+        this.data = gson.toJsonTree(data);
+    }
+
+    /**
+     * Retrieves the entire configuration data as a JSON object.
+     *
+     * @return The configuration data.
+     */
+    public JsonElement getData() {
         return data;
     }
 
@@ -255,6 +305,23 @@ public final class CommentedConfiguration {
                 lines.add(event.getStartMark().getLine() + (offset++), comment);
             }
         }
+    }
+
+    private static @Nullable Method SET_PROCESS_COMMENTS;
+
+    static {
+        try {
+            SET_PROCESS_COMMENTS = DumperOptions.class.getDeclaredMethod("setProcessComments", boolean.class);
+            SET_PROCESS_COMMENTS.setAccessible(true);
+        } catch (NoSuchMethodException ignored) {
+        }
+    }
+
+    @SneakyThrows
+    private static void setProcessComments(@NotNull DumperOptions options, boolean process) {
+        if (SET_PROCESS_COMMENTS != null)
+            // Invoke the method with the desired parameter
+            SET_PROCESS_COMMENTS.invoke(options, process);
     }
 
     /**
