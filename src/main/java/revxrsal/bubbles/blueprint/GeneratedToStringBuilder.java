@@ -21,39 +21,51 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  */
-package revxrsal.bubbles.loader;
+package revxrsal.bubbles.blueprint;
 
-import org.jetbrains.annotations.NotNull;
+import java.lang.reflect.Array;
+import java.util.StringJoiner;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+public final class GeneratedToStringBuilder {
 
-/**
- * A utility for creating instances of {@link ClassDefiner} and
- * providing compatibility
- */
-public final class Definer {
+    private final StringJoiner joiner;
 
-    private static final ClassDefiner DEFINER;
-
-    public static Class<?> defineClass(@NotNull ClassLoader classLoader, @NotNull String name, byte[] data) {
-        return DEFINER.defineClass(classLoader, name, data);
+    public GeneratedToStringBuilder(String name) {
+        joiner = new StringJoiner(", ", name + "(", ")");
     }
 
-    public static boolean supportsPackagePrivate() {
-        return DEFINER instanceof ReflectionDefiner;
+    public void append(String name, Object value) {
+        if (value == null) {
+            joiner.add(name + "=null");
+        } else {
+            if (value.getClass().isArray()) {
+                joiner.add(name + "=" + toString(value));
+            } else {
+                joiner.add(name + "=" + value);
+            }
+        }
     }
 
-    public static boolean isPackagePrivate(Method method) {
-        int mods = method.getModifiers();
-        return !Modifier.isPrivate(mods) && !Modifier.isProtected(mods) && !Modifier.isPublic(mods);
+    @Override public String toString() {
+        return joiner.toString();
     }
 
-    static {
-        if (ReflectionDefiner.isSupported())
-            DEFINER = new ReflectionDefiner();
-        else
-            DEFINER = new GeneratedDefiner();
+    private static String toString(Object a) {
+        if (a == null)
+            return "null";
+
+        int iMax = Array.getLength(a) - 1;
+        if (iMax == -1)
+            return "[]";
+
+        StringBuilder b = new StringBuilder();
+        b.append('[');
+        for (int i = 0; ; i++) {
+            b.append(Array.get(a, i));
+            if (i == iMax)
+                return b.append(']').toString();
+            b.append(", ");
+        }
     }
 
 }

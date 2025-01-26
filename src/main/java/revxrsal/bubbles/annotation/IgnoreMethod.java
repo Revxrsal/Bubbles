@@ -21,39 +21,18 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  */
-package revxrsal.bubbles.loader;
+package revxrsal.bubbles.annotation;
 
-import org.jetbrains.annotations.NotNull;
-
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * A utility for creating instances of {@link ClassDefiner} and
- * providing compatibility
+ * Marks a method as ignored by the property scanner of {@link Blueprint blueprints}. It
+ * must be a default method, otherwise an error will be thrown.
  */
-public final class Definer {
-
-    private static final ClassDefiner DEFINER;
-
-    public static Class<?> defineClass(@NotNull ClassLoader classLoader, @NotNull String name, byte[] data) {
-        return DEFINER.defineClass(classLoader, name, data);
-    }
-
-    public static boolean supportsPackagePrivate() {
-        return DEFINER instanceof ReflectionDefiner;
-    }
-
-    public static boolean isPackagePrivate(Method method) {
-        int mods = method.getModifiers();
-        return !Modifier.isPrivate(mods) && !Modifier.isProtected(mods) && !Modifier.isPublic(mods);
-    }
-
-    static {
-        if (ReflectionDefiner.isSupported())
-            DEFINER = new ReflectionDefiner();
-        else
-            DEFINER = new GeneratedDefiner();
-    }
-
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface IgnoreMethod {
 }

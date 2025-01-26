@@ -21,39 +21,25 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  */
-package revxrsal.bubbles.loader;
+package revxrsal.bubbles.blueprint;
 
-import org.jetbrains.annotations.NotNull;
+import com.google.gson.annotations.SerializedName;
+import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.Method;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+final class AsmConstants {
 
-/**
- * A utility for creating instances of {@link ClassDefiner} and
- * providing compatibility
- */
-public final class Definer {
+    public static final Type OBJECT_CLASS = Type.getType(Object.class);
+    public static final Method NO_ARG_CONSTRUCTOR = Method.getMethod("void <init>()");
 
-    private static final ClassDefiner DEFINER;
+    public static final Type TO_STRING_BUILDER = Type.getType(GeneratedToStringBuilder.class);
+    public static final Method TO_STRING_BUILDER_CONSTRUCTOR = Method.getMethod("void <init>(java.lang.String)");
+    public static final Method TO_STRING_APPEND = Method.getMethod("void append(java.lang.String, java.lang.Object)");
+    public static final Method TO_STRING = Method.getMethod("java.lang.String toString()");
 
-    public static Class<?> defineClass(@NotNull ClassLoader classLoader, @NotNull String name, byte[] data) {
-        return DEFINER.defineClass(classLoader, name, data);
-    }
+    public static final Type SERIALIZED_NAME = Type.getType(SerializedName.class);
 
-    public static boolean supportsPackagePrivate() {
-        return DEFINER instanceof ReflectionDefiner;
-    }
-
-    public static boolean isPackagePrivate(Method method) {
-        int mods = method.getModifiers();
-        return !Modifier.isPrivate(mods) && !Modifier.isProtected(mods) && !Modifier.isPublic(mods);
-    }
-
-    static {
-        if (ReflectionDefiner.isSupported())
-            DEFINER = new ReflectionDefiner();
-        else
-            DEFINER = new GeneratedDefiner();
+    private AsmConstants() {
     }
 
 }

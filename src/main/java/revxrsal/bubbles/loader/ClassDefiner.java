@@ -1,5 +1,5 @@
 /*
- * This file is part of asm-invoke-util, licensed under the MIT License.
+ * This file is part of Bubbles, licensed under the MIT License.
  *
  *  Copyright (c) Revxrsal <reflxction.github@gmail.com>
  *
