@@ -50,20 +50,48 @@ import java.util.regex.Pattern;
  */
 public final class CommentedConfiguration {
 
+    /**
+     * Shared Gson instance with custom type adapters
+     */
     private static final Gson GSON = new GsonBuilder()
             .registerTypeAdapterFactory(Blueprints.gsonFactory())
             .registerTypeAdapterFactory(EnumTypeAdapterFactory.get())
             .disableHtmlEscaping()
             .create();
 
-    private static final Type MAP_TYPE = new TypeToken<Map<String, Object>>() {
-    }.getType();
+    /**
+     * Type reference for deserializing maps with string keys and object values.
+     */
+    private static final Type MAP_TYPE = new TypeToken<Map<String, Object>>() {}.getType();
+
+    /**
+     * Pattern for matching newline characters.
+     */
     private static final Pattern NEW_LINE = Pattern.compile("\n");
 
+    /**
+     * YAML processor instance for reading and writing YAML data.
+     */
     private final Yaml yaml;
+
+    /**
+     * A map storing comments associated with specific configuration keys.
+     */
     private final Map<String, String> configComments = new HashMap<>();
+
+    /**
+     * Gson instance for serializing and deserializing JSON data.
+     */
     private final Gson gson;
+
+    /**
+     * Path to the configuration file.
+     */
     private final Path file;
+
+    /**
+     * The JSON representation of the configuration data.
+     */
     private JsonElement data = JsonNull.INSTANCE;
 
     CommentedConfiguration(Path file, Gson gson) {
@@ -82,11 +110,7 @@ public final class CommentedConfiguration {
     public void load() {
         try (BufferedReader reader = Files.newBufferedReader(file)) {
             Map<String, Object> map = yaml.load(reader);
-            JsonElement element = gson.toJsonTree(map, MAP_TYPE);
-            if (element.isJsonNull())
-                data = new JsonObject();
-            else
-                data = element.getAsJsonObject();
+            data = gson.toJsonTree(map, MAP_TYPE);
         }
     }
 
