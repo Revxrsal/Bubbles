@@ -23,4 +23,4 @@ jobs:
       - name: Build JAR
         run: |
           chmod +x ./gradlew
-          ./gradlew buildó
+          ./gradlew build
