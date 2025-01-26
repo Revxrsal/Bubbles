@@ -27,9 +27,16 @@ import com.google.gson.annotations.SerializedName;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Method;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+
 final class AsmConstants {
 
     public static final Type OBJECT_CLASS = Type.getType(Object.class);
+    public static final Type ARRAY_LIST = Type.getType(ArrayList.class);
+    public static final Type LINKED_HASH_SET = Type.getType(LinkedHashSet.class);
+    public static final Type LINKED_HASH_MAP = Type.getType(LinkedHashMap.class);
     public static final Method NO_ARG_CONSTRUCTOR = Method.getMethod("void <init>()");
 
     public static final Type TO_STRING_BUILDER = Type.getType(GeneratedToStringBuilder.class);

@@ -25,17 +25,14 @@ package revxrsal.bubbles.blueprint;
 
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
-import org.objectweb.asm.AnnotationVisitor;
-import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.FieldVisitor;
-import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
 import revxrsal.bubbles.loader.Definer;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.Objects;
+import java.util.*;
 
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static revxrsal.bubbles.blueprint.AsmConstants.*;
@@ -104,18 +101,34 @@ final class BlueprintGenerator {
             constructor.putField(bp.implType(), property.fieldName(), property.type());
         } else if (Blueprints.isBlueprint(property.propClass())) {
             BlueprintClass bpc = Blueprints.from(property.propClass());
+            initWithNoArg(bpc.implType(), property);
+        } else if (property.propClass() == List.class
+                || property.propClass() == Iterable.class
+                || property.propClass() == Collection.class
+        ) {
+            initWithNoArg(ARRAY_LIST, property);
+        } else if (property.propClass() == Set.class) {
+            initWithNoArg(LINKED_HASH_SET, property);
+        } else if (property.propClass() == Map.class) {
+            initWithNoArg(LINKED_HASH_MAP, property);
+        } else if (property.propClass().isArray()) {
             constructor.loadThis();
-            constructor.loadThis();
-            constructor.newInstance(bpc.implType());
-            constructor.dup();
-            constructor.invokeConstructor(bpc.implType(), NO_ARG_CONSTRUCTOR);
+            constructor.push(0);
+            constructor.newArray(Type.getType(property.propClass().getComponentType()));
             constructor.putField(bp.implType(), property.fieldName(), property.type());
-
         }
-
         generateGetter(property);
         if (property.setter() != null)
             generateSetter(property);
+    }
+
+    private void initWithNoArg(Type type, BlueprintProperty property) {
+        constructor.loadThis();
+        constructor.loadThis();
+        constructor.newInstance(type);
+        constructor.dup();
+        constructor.invokeConstructor(type, NO_ARG_CONSTRUCTOR);
+        constructor.putField(bp.implType(), property.fieldName(), property.type());
     }
 
     private void generateGetter(@NotNull BlueprintProperty property) {

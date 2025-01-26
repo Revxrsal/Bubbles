@@ -57,6 +57,7 @@ public final class Blueprints {
         bp = BlueprintClass.from(interfaceType);
         BlueprintGenerator generator = new BlueprintGenerator(bp);
         bp.setClass(generator.define());
+        generator.output("output.class");
         IMPLEMENTATIONS.put(interfaceType, bp);
         return bp;
     }
