@@ -76,7 +76,7 @@ public final class Blueprints {
      * blueprint interfaces. You must register this to be able
      * to use blueprints
      *
-     * @return
+     * @return The gson type adapter factory
      */
     public static @NotNull TypeAdapterFactory gsonFactory() {
         return ICreator.instance;

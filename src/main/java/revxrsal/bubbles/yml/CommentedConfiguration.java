@@ -21,9 +21,10 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *  SOFTWARE.
  */
-package revxrsal.bubbles;
+package revxrsal.bubbles.yml;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -34,6 +35,7 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.events.*;
 import revxrsal.bubbles.blueprint.BlueprintClass;
+import revxrsal.bubbles.blueprint.Blueprints;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
@@ -51,6 +53,12 @@ import java.util.regex.Pattern;
  */
 public final class CommentedConfiguration {
 
+    private static final Gson GSON = new GsonBuilder()
+            .registerTypeAdapterFactory(Blueprints.gsonFactory())
+            .registerTypeAdapterFactory(EnumTypeAdapterFactory.get())
+            .disableHtmlEscaping()
+            .create();
+
     private static final Type MAP_TYPE = new TypeToken<Map<String, Object>>() {
     }.getType();
     private static final Pattern NEW_LINE = Pattern.compile("\n");
@@ -61,7 +69,7 @@ public final class CommentedConfiguration {
     private final Path file;
     private JsonObject data;
 
-    public CommentedConfiguration(Path file, Gson gson) {
+    CommentedConfiguration(Path file, Gson gson) {
         this.gson = gson;
         this.file = file;
         DumperOptions options = new DumperOptions();
@@ -88,9 +96,9 @@ public final class CommentedConfiguration {
     /**
      * Sets the comment of the given path.
      *
-     * @param path     The comment path. Subkeys are delimited by '.', and array entries have 0
-     *                 as their parent.
-     * @param comment  The comment
+     * @param path    The comment path. Subkeys are delimited by '.', and array entries have 0
+     *                as their parent.
+     * @param comment The comment
      */
     public void setComment(@NotNull String path, @NotNull String comment) {
         this.configComments.put(path, comment);
@@ -133,11 +141,22 @@ public final class CommentedConfiguration {
      *
      * @param file The file to load the config from.
      * @param gson The GSON instance to deserialize with
-     * @return A new instance of OptimizedCommentedConfiguration contains all the data (keys, values and comments).
+     * @return A new instance of CommentedConfiguration
      */
     public static CommentedConfiguration from(Path file, Gson gson) {
         //Creating a blank instance of the config.
         return new CommentedConfiguration(file, gson);
+    }
+
+    /**
+     * Load a config from a file
+     *
+     * @param file The file to load the config from.
+     * @return A new instance of CommentedConfiguration
+     */
+    public static CommentedConfiguration from(Path file) {
+        //Creating a blank instance of the config.
+        return from(file, GSON);
     }
 
     private static @Nullable Method SET_PROCESS_COMMENTS;
@@ -148,6 +167,45 @@ public final class CommentedConfiguration {
             SET_PROCESS_COMMENTS.setAccessible(true);
         } catch (NoSuchMethodException ignored) {
         }
+    }
+
+    @SneakyThrows
+    private static void setProcessComments(@NotNull DumperOptions options, boolean process) {
+        if (SET_PROCESS_COMMENTS != null)
+            // Invoke the method with the desired parameter
+            SET_PROCESS_COMMENTS.invoke(options, process);
+    }
+
+    public <T> T get(String key, Type type) {
+        return gson.fromJson(data.get(key), type);
+    }
+
+    public <T> T getAs(Type type) {
+        return gson.fromJson(data, type);
+    }
+
+    public <T> T get(String key, Class<T> type) {
+        return get(key, (Type) type);
+    }
+
+    public void set(String key, Object v) {
+        data.add(key, gson.toJsonTree(v));
+    }
+
+    public void set(String key, Object v, Type type) {
+        data.add(key, gson.toJsonTree(v, type));
+    }
+
+    public boolean contains(String path) {
+        return data.has(path);
+    }
+
+    public void setData(JsonObject jsonObject) {
+        this.data = jsonObject;
+    }
+
+    public JsonObject getData() {
+        return data;
     }
 
     private void handleEvents(Iterator<Event> eventsI, List<String> lines) {
@@ -198,46 +256,6 @@ public final class CommentedConfiguration {
             }
         }
     }
-
-    @SneakyThrows
-    private static void setProcessComments(@NotNull DumperOptions options, boolean process) {
-        if (SET_PROCESS_COMMENTS != null)
-            // Invoke the method with the desired parameter
-            SET_PROCESS_COMMENTS.invoke(options, process);
-    }
-
-    public <T> T get(String key, Type type) {
-        return gson.fromJson(data.get(key), type);
-    }
-
-    public <T> T getAs(Type type) {
-        return gson.fromJson(data, type);
-    }
-
-    public <T> T get(String key, Class<T> type) {
-        return get(key, (Type) type);
-    }
-
-    public void set(String key, Object v) {
-        data.add(key, gson.toJsonTree(v));
-    }
-
-    public void set(String key, Object v, Type type) {
-        data.add(key, gson.toJsonTree(v, type));
-    }
-
-    public boolean contains(String path) {
-        return data.has(path);
-    }
-
-    public void setData(JsonObject jsonObject) {
-        this.data = jsonObject;
-    }
-
-    public JsonObject getData() {
-        return data;
-    }
-
 
     /**
      * Legally stolen and re-adapted from Guava's PeekingImpl class
