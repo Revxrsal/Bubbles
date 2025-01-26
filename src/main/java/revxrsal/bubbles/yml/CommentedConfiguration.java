@@ -307,20 +307,30 @@ public final class CommentedConfiguration {
         }
     }
 
+    /**
+     * Reflective access to the `setProcessComments` method in {@link DumperOptions}.
+     */
     private static @Nullable Method SET_PROCESS_COMMENTS;
 
     static {
         try {
+            // Attempt to retrieve the private `setProcessComments` method.
             SET_PROCESS_COMMENTS = DumperOptions.class.getDeclaredMethod("setProcessComments", boolean.class);
             SET_PROCESS_COMMENTS.setAccessible(true);
         } catch (NoSuchMethodException ignored) {
+            // Ignored as the method may not exist in older versions.
         }
     }
 
+    /**
+     * Sets the `processComments` flag on the given {@link DumperOptions} instance.
+     *
+     * @param options The {@link DumperOptions} instance.
+     * @param process The value to set for `processComments`.
+     */
     @SneakyThrows
     private static void setProcessComments(@NotNull DumperOptions options, boolean process) {
         if (SET_PROCESS_COMMENTS != null)
-            // Invoke the method with the desired parameter
             SET_PROCESS_COMMENTS.invoke(options, process);
     }
 
