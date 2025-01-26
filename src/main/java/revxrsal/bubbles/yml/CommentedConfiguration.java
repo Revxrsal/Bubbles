@@ -55,7 +55,7 @@ public final class CommentedConfiguration {
     /**
      * Shared Gson instance with custom type adapters
      */
-    private static final Gson GSON = new GsonBuilder()
+    public static final Gson GSON = new GsonBuilder()
             .registerTypeAdapterFactory(Blueprints.gsonFactory())
             .registerTypeAdapterFactory(EnumTypeAdapterFactory.get())
             .disableHtmlEscaping()
