@@ -23,6 +23,12 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.36")
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
+}
+
 mavenPublishing {
     coordinates(
         groupId = group as String,
@@ -57,4 +63,5 @@ mavenPublishing {
 
     publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
     signAllPublications()
+
 }
