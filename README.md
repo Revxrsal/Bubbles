@@ -8,6 +8,15 @@
 
 A library for generating beautiful, commented, type-safe YML through interfaces
 
+### Features
+- Create interfaces (blueprints) that define your configuration
+- Create default values with default methods
+- Supports comments for blueprints using `@Comment` 🔥
+- Recursively use blueprints as arrays, lists, values of maps, etc.
+- Blueprints support setters
+- ASM-generated implementations for lightning performance
+- Uses Gson under the hood for deserializing (to be improved)
+
 ### Example
 
 ```java
@@ -28,7 +37,7 @@ public interface Arena {
             "",
             "Default value: teams"
     })
-    default ArenaType atype() {
+    default ArenaType type() {
         return ArenaType.SINGLE;
     }
 
@@ -36,6 +45,38 @@ public interface Arena {
         TEAMS,
         SINGLE
     }
+}
+```
+
+```java
+public static void main(String[] args) {
+    // BlueprintClass allows us to examine blueprints and
+    // read their properties
+    BlueprintClass blueprintClass = Blueprints.from(Arena.class);
+
+    // Creates an instance of Arena with all default values
+    Arena arena = blueprintClass.createDefault();
+    System.out.println(arena);
+
+    // Use our specialized CommentedConfiguration class
+    CommentedConfiguration config = CommentedConfiguration.from(
+            Paths.get("config.yml")
+    );
+
+    // Set the content of the configuration to the arena
+    config.setTo(arena);
+
+    // Set the comments to the blueprint class comments
+    config.setComments(blueprintClass.comments());
+
+    // Save the configuration
+    config.save();
+
+    // Reads the content of the configuration as an Arena
+    Arena deserializedArena = config.getAs(Arena.class);
+
+    // Prints: Arena(name=default name, capacity=0, type=SINGLE)
+    System.out.println(deserializedArena);
 }
 ```
 
@@ -50,5 +91,6 @@ capacity: 0.0
 # The arena type. Values: 'teams' or 'single'
 # 
 # Default value: teams
-atype: single
+type: single
 ```
+
