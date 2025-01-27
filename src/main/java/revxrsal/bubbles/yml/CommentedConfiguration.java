@@ -347,8 +347,14 @@ public final class CommentedConfiguration {
             if (event instanceof MappingStartEvent) {
                 expectKey = true;
             } else if (event instanceof MappingEndEvent) {
-                expectKey = false;
                 path.pollLast();
+                expectKey = true;
+                if (events.hasNext()) {
+                    Event next = events.peek();
+                    if (next instanceof ScalarEvent) {
+                        path.pollLast();
+                    }
+                }
             } else if (event instanceof ScalarEvent) {
                 if (expectKey) {
                     expectKey = false;
