@@ -50,9 +50,9 @@ public final class Definer {
     }
 
     static {
-        if (ReflectionDefiner.isSupported())
-            DEFINER = new ReflectionDefiner();
-        else
+//        if (ReflectionDefiner.isSupported())
+//            DEFINER = new ReflectionDefiner();
+//        else
             DEFINER = new GeneratedDefiner();
     }
 

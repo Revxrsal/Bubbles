@@ -27,6 +27,7 @@ import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;
+import org.objectweb.asm.commons.Method;
 import revxrsal.bubbles.loader.Definer;
 
 import java.io.File;
@@ -97,7 +98,8 @@ final class BlueprintGenerator {
         if (property.hasDefault()) {
             constructor.loadThis();
             constructor.loadThis();
-            constructor.invokeConstructor(bp.blueprintType(), property.asmGetter());
+
+            invokeInsn(constructor, Opcodes.INVOKESPECIAL, bp.blueprintType(), property.asmGetter(), true);
             constructor.putField(bp.implType(), property.fieldName(), property.type());
         } else if (Blueprints.isBlueprint(property.propClass())) {
             BlueprintClass bpc = Blueprints.from(property.propClass());
@@ -120,6 +122,17 @@ final class BlueprintGenerator {
         generateGetter(property);
         if (property.setter() != null)
             generateSetter(property);
+    }
+
+    private static void invokeInsn(
+            GeneratorAdapter adapter,
+            final int opcode,
+            final Type type,
+            final Method method,
+            final boolean isInterface
+    ) {
+        String owner = type.getSort() == Type.ARRAY ? type.getDescriptor() : type.getInternalName();
+        adapter.visitMethodInsn(opcode, owner, method.getName(), method.getDescriptor(), isInterface);
     }
 
     private void initWithNoArg(Type type, BlueprintProperty property) {
