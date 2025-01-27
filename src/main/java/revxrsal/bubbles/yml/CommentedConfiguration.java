@@ -97,9 +97,15 @@ public final class CommentedConfiguration {
      */
     private JsonElement data = JsonNull.INSTANCE;
 
-    CommentedConfiguration(Path file, Gson gson) {
+    /**
+     * The array commenting style
+     */
+    private final ArrayCommentStyle arrayCommentStyle;
+
+    CommentedConfiguration(Path file, Gson gson, ArrayCommentStyle arrayCommentStyle) {
         this.gson = gson;
         this.file = file;
+        this.arrayCommentStyle = arrayCommentStyle;
         DumperOptions options = new DumperOptions();
         setProcessComments(options, false);
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
@@ -167,19 +173,54 @@ public final class CommentedConfiguration {
     }
 
     /**
-     * Load a config from a file
+     * Create a config from a file
+     *
+     * @param file              The file to load the config from.
+     * @param gson              The GSON instance to deserialize with
+     * @param arrayCommentStyle The array commenting style. See {@link ArrayCommentStyle}.
+     * @return A new instance of CommentedConfiguration
+     */
+    public static @NotNull CommentedConfiguration from(
+            @NotNull Path file,
+            @NotNull Gson gson,
+            @NotNull ArrayCommentStyle arrayCommentStyle
+    ) {
+        //Creating a blank instance of the config.
+        return new CommentedConfiguration(file, gson, arrayCommentStyle);
+    }
+
+    /**
+     * Create a config from a file
+     *
+     * @param file              The file to load the config from.
+     * @param arrayCommentStyle The array commenting style. See {@link ArrayCommentStyle}.
+     * @return A new instance of CommentedConfiguration
+     */
+    public static @NotNull CommentedConfiguration from(
+            @NotNull Path file,
+            @NotNull ArrayCommentStyle arrayCommentStyle
+    ) {
+        //Creating a blank instance of the config.
+        return new CommentedConfiguration(file, GSON, arrayCommentStyle);
+    }
+
+    /**
+     * Create a config from a file
      *
      * @param file The file to load the config from.
      * @param gson The GSON instance to deserialize with
      * @return A new instance of CommentedConfiguration
      */
-    public static @NotNull CommentedConfiguration from(@NotNull Path file, @NotNull Gson gson) {
+    public static @NotNull CommentedConfiguration from(
+            @NotNull Path file,
+            @NotNull Gson gson
+    ) {
         //Creating a blank instance of the config.
-        return new CommentedConfiguration(file, gson);
+        return new CommentedConfiguration(file, gson, ArrayCommentStyle.COMMENT_FIRST_ELEMENT);
     }
 
     /**
-     * Load a config from a file
+     * Create a config from a file
      *
      * @param file The file to load the config from.
      * @return A new instance of CommentedConfiguration
@@ -260,7 +301,7 @@ public final class CommentedConfiguration {
      *
      * @param data The new JSON object to set.
      */
-    public void setData(@NotNull JsonObject data) {
+    public void setTo(@NotNull JsonObject data) {
         this.data = data;
     }
 
@@ -269,7 +310,7 @@ public final class CommentedConfiguration {
      *
      * @param data The new JSON object to set.
      */
-    public void setData(@NotNull Object data, Type type) {
+    public void setTo(@NotNull Object data, Type type) {
         this.data = gson.toJsonTree(data, type);
     }
 
@@ -278,7 +319,7 @@ public final class CommentedConfiguration {
      *
      * @param data The new JSON object to set.
      */
-    public void setData(@NotNull Object data) {
+    public void setTo(@NotNull Object data) {
         this.data = gson.toJsonTree(data);
     }
 
@@ -334,7 +375,7 @@ public final class CommentedConfiguration {
             lastWasScalar = event instanceof ScalarEvent;
             String commentPath = String.join(".", path);
             String comment = configComments.get(commentPath);
-            if (comment != null && commentsAdded.add(commentPath)) {
+            if (comment != null && (commentsAdded.add(commentPath) || arrayCommentStyle == ArrayCommentStyle.COMMENT_ALL_ELEMENTS)) {
                 lines.add(event.getStartMark().getLine() + (offset++), comment);
             }
         }
