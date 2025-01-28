@@ -29,10 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 import org.objectweb.asm.Type;
-import revxrsal.bubbles.annotation.Blueprint;
-import revxrsal.bubbles.annotation.Comment;
-import revxrsal.bubbles.annotation.IgnoreMethod;
-import revxrsal.bubbles.annotation.Key;
+import revxrsal.bubbles.annotation.*;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -105,8 +102,10 @@ public final class BlueprintProperty {
             throw new IllegalArgumentException("Class is not an interface: " + interfaceType.getName());
         if (!interfaceType.isAnnotationPresent(Blueprint.class))
             throw new IllegalArgumentException("Interface does not have @Blueprint on it!");
-        Map<String, BlueprintProperty> properties = new HashMap<>();
-        for (Method method : interfaceType.getMethods()) {
+        Map<String, BlueprintProperty> properties = new LinkedHashMap<>();
+        Method[] methods = interfaceType.getMethods();
+        sortByAnnotation(methods);
+        for (Method method : methods) {
             if (Modifier.isStatic(method.getModifiers()))
                 continue;
             if (method.isAnnotationPresent(IgnoreMethod.class)) {
@@ -124,6 +123,22 @@ public final class BlueprintProperty {
                 throw new IllegalArgumentException("No getter exists for property '" + value.key + "'!");
         }
         return Collections.unmodifiableMap(properties);
+    }
+
+    private static void sortByAnnotation(Method[] methods) {
+        Arrays.sort(methods, (o1, o2) -> {
+            Pos pos1 = o1.getAnnotation(Pos.class);
+            Pos pos2 = o2.getAnnotation(Pos.class);
+            if (pos1 == null && pos2 == null)
+                return 0; // Both methods are unannotated
+            if (pos1 == null)
+                return -1; // o1 is unannotated, so it comes first
+            if (pos2 == null)
+                return 1;  // o2 is unannotated, so it comes first
+
+            // Both methods have the annotation, compare their values
+            return Integer.compare(pos1.value(), pos2.value());
+        });
     }
 
     private void setType(@Nullable Type type) {
@@ -155,8 +170,6 @@ public final class BlueprintProperty {
                 throw new IllegalArgumentException("Setter for property '" + key + "' has no parameters!");
             if (method.getParameterCount() > 1)
                 throw new IllegalArgumentException("Setter for property '" + key + "' has more than 1 parameter!");
-            if (method.isDefault())
-                throw new IllegalArgumentException("");
             existing.propClass = method.getParameterTypes()[0];
             Type type = Type.getType(existing.propClass);
             existing.setType(type);
